@@ -1,7 +1,6 @@
 import pyaudio
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from constants import CHUNK, RATE, CHANNELS
 
@@ -25,6 +24,7 @@ stream.close()
 p.terminate()
 
 print('Saving data...')
+
 frames = np.frombuffer(b''.join(frames), dtype=np.int16)
 frames = np.reshape(frames, (-1, CHANNELS))
 all_data = frames[:, :CHANNELS-1]
