@@ -2,7 +2,7 @@ import pyaudio
 import sys
 import numpy as np
 import pandas as pd
-from constants import CHUNK, RATE, CHANNELS
+from constants import CHUNK, RATE, CHANNELS, FORMAT
 
 LEN = int(sys.argv[1])
 recording_angle = sys.argv[2]
@@ -11,7 +11,7 @@ print(f'Recording data for angle: {recording_angle} degrees.')
 print(f'Recording length will be {LEN} seconds.')
 
 p = pyaudio.PyAudio()
-stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 frames = []
 
