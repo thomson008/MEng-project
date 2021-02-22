@@ -6,7 +6,6 @@ import pandas as pd
 from constants import CHUNK, RATE, CHANNELS
 
 LEN = int(sys.argv[1])
-
 recording_angle = sys.argv[2]
 
 print(f'Recording data for angle: {recording_angle} degrees.')
@@ -27,7 +26,7 @@ p.terminate()
 
 print('Saving data...')
 frames = np.frombuffer(b''.join(frames), dtype=np.int16)
-frames = np.reshape(frames, (CHANNELS, -1), order='F').T
+frames = np.reshape(frames, (-1, CHANNELS))
 all_data = frames[:, :CHANNELS-1]
 
 cols = [f'mic_{i}' for i in range(CHANNELS-1)]
