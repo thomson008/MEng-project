@@ -7,7 +7,6 @@ RATE = 16000
 CHANNELS = 8
 
 p = pyaudio.PyAudio()
-
 stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 # Create figure for subplots of signals
