@@ -1,13 +1,10 @@
 import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
-
-CHUNK = 1024
-RATE = 16000
-CHANNELS = 8
+from constants import CHUNK, RATE, CHANNELS, FORMAT
 
 p = pyaudio.PyAudio()
-stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 # Create figure for subplots of signals
 fig, axs = plt.subplots(7, figsize=(6,12))
