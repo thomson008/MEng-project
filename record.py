@@ -1,7 +1,7 @@
 import pyaudio
 import sys
 import numpy as np
-import pandas as pd
+from scipy.io import wavfile
 from constants import CHUNK, RATE, CHANNELS, FORMAT
 
 LEN = int(sys.argv[1])
@@ -29,9 +29,7 @@ frames = np.frombuffer(b''.join(frames), dtype=np.int16)
 frames = np.reshape(frames, (-1, CHANNELS))
 all_data = frames[:, :CHANNELS-1]
 
-cols = [f'mic_{i}' for i in range(CHANNELS-1)]
-df = pd.DataFrame(data=all_data, columns=cols)
-df['output_angle'] = recording_angle
-df.to_csv(f'./training_data/recording_angle_{recording_angle}.csv')
+
+wavfile.write(f'./training_data/recording_angle_{recording_angle}.wav', RATE, all_data)
 
 print('Done.')
