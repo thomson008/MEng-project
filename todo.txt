@@ -1,0 +1,3 @@
+1. create different rooms for training and testing
+2. simulate in different rt60 and SNR
+3. Modify splitting data to training and testing
