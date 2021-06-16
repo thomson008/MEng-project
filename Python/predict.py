@@ -49,12 +49,3 @@ class Predictor():
         prediction = np.argmax(y_pred) * RESOLUTION
 
         return prediction
-
-
-predictor = Predictor()
-
-import time
-while True:
-    time.sleep(0.1)
-    pred = predictor.current_prediction
-    print(pred)
