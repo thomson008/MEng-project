@@ -2,7 +2,7 @@ import pyaudio
 import sys
 import numpy as np
 from scipy.io import wavfile
-from constants import CHUNK, RATE, CHANNELS, FORMAT
+from utils import CHUNK, RATE, CHANNELS, FORMAT
 
 LEN = int(sys.argv[1])
 recording_angle = sys.argv[2]

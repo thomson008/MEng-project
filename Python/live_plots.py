@@ -1,7 +1,7 @@
 import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
-from constants import CHUNK, RATE, CHANNELS, FORMAT
+from utils import CHUNK, RATE, CHANNELS, FORMAT
 
 p = pyaudio.PyAudio()
 stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)

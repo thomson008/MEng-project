@@ -1,7 +1,0 @@
-import pyaudio
-
-CHUNK = 4096
-RATE = 44100
-CHANNELS = 8
-FORMAT = pyaudio.paInt16
-RESOLUTION = 10
