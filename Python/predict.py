@@ -4,6 +4,7 @@ from utils import *
 from itertools import combinations
 import math
 import tensorflow as tf
+from alsa_suppress import noalsaerr 
 
 class Predictor():
     def __init__(self, thresh=400):
@@ -24,7 +25,8 @@ class Predictor():
             
             return (data, pyaudio.paContinue)
 
-        self.p = pyaudio.PyAudio()
+        with noalsaerr():
+            self.p = pyaudio.PyAudio()
 
         self.stream = self.p.open(
             format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
