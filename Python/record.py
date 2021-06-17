@@ -29,7 +29,6 @@ frames = np.frombuffer(b''.join(frames), dtype=np.int16)
 frames = np.reshape(frames, (-1, CHANNELS))
 all_data = frames[:, :CHANNELS-1]
 
-
-wavfile.write(f'./training_data/recording_angle_{recording_angle}.wav', RATE, all_data)
+wavfile.write(f'../training_data/recording_angle_{recording_angle}.wav', RATE, all_data)
 
 print('Done.')
