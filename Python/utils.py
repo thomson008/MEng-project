@@ -5,7 +5,7 @@ from itertools import combinations
 
 
 CHUNK = 4096
-RATE = 44100
+RATE = 22050
 CHANNELS = 8
 FORMAT = pyaudio.paInt16
 RESOLUTION = 10

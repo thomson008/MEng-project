@@ -13,7 +13,7 @@ plt.subplots_adjust(hspace=0.8)
 lines = []
 
 for i, ax in enumerate(axs):
-    ax.set_title(f'Microphone {i+1}')
+    ax.set_title(f'Microphone {i}')
     ax.set_ylim(-250, 250)
     ax.set_xlim(0, CHUNK)
 
