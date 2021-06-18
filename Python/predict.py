@@ -4,7 +4,8 @@ from utils import *
 from itertools import combinations
 import math
 import tensorflow as tf
-from alsa_suppress import noalsaerr 
+from alsa_suppress import noalsaerr
+import platform
 
 class Predictor():
     def __init__(self, thresh=400):
@@ -25,8 +26,11 @@ class Predictor():
             
             return (data, pyaudio.paContinue)
 
-        with noalsaerr():
+        if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
+        else:
+            with noalsaerr():
+                self.p = pyaudio.PyAudio()
 
         self.stream = self.p.open(
             format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
