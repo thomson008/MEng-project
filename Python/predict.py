@@ -11,24 +11,7 @@ class Predictor():
     def __init__(self, thresh=300):
         self.current_prediction = None
         self.confidences = np.zeros(360//RESOLUTION)
-
-        def callback(in_data, frame_count, time_info, status):
-            data = np.frombuffer(in_data, dtype=np.int16)
-            data = np.reshape(data, (-1, CHANNELS))
-
-            # Drop irrelevant channels and reorder remaining channels,
-            # in order to match the simulated microphone array
-            mic_data = np.hstack([data[:, 1].reshape(-1, 1), data[:, -2:1:-1]])
-
-            if abs(np.max(mic_data)) > thresh:
-                self.current_prediction = self.get_prediction_from_model(mic_data)
-            else:
-                self.current_prediction = None
-                self.confidences = np.zeros(360//RESOLUTION)
-
-            self.run()
-            
-            return (data, pyaudio.paContinue)
+        self.thresh = thresh
 
         if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
@@ -38,11 +21,30 @@ class Predictor():
 
         self.stream = self.p.open(
             format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
-            frames_per_buffer=CHUNK, stream_callback=callback
+            frames_per_buffer=CHUNK, stream_callback=self.callback
         )
 
         self.stream.start_stream()
         self.init_model()
+
+
+    def callback(self, in_data, frame_count, time_info, status):
+        data = np.frombuffer(in_data, dtype=np.int16)
+        data = np.reshape(data, (-1, CHANNELS))
+
+        # Drop irrelevant channels and reorder remaining channels,
+        # in order to match the simulated microphone array
+        mic_data = np.hstack([data[:, 1].reshape(-1, 1), data[:, -2:1:-1]])
+
+        if abs(np.max(mic_data)) > self.thresh:
+            self.current_prediction = self.get_prediction_from_model(mic_data)
+        else:
+            self.current_prediction = None
+            self.confidences = np.zeros(360//RESOLUTION)
+
+        self.run()
+        
+        return (data, pyaudio.paContinue)
 
 
     def init_model(self):
