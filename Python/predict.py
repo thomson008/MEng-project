@@ -8,11 +8,12 @@ from alsa_suppress import noalsaerr
 import platform
 
 class Predictor():
-    def __init__(self, thresh=400):
+    def __init__(self, thresh=300):
         self.current_prediction = None
+        self.confidences = np.zeros(360//RESOLUTION)
 
         def callback(in_data, frame_count, time_info, status):
-            data = np.frombuffer(in_data, dtype=np.int16) * 50
+            data = np.frombuffer(in_data, dtype=np.int16)
             data = np.reshape(data, (-1, CHANNELS))
 
             # Drop irrelevant channels and reorder remaining channels,
@@ -23,6 +24,9 @@ class Predictor():
                 self.current_prediction = self.get_prediction_from_model(mic_data)
             else:
                 self.current_prediction = None
+                self.confidences = np.zeros(360//RESOLUTION)
+
+            self.run()
             
             return (data, pyaudio.paContinue)
 
@@ -80,6 +84,8 @@ class Predictor():
         self.interpreter.invoke()
         output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
 
+        self.confidences = output_data[0]
+
         # Get the predicted DOA as argument of the max probability
         prediction, confidence = np.argmax(output_data[0]) * RESOLUTION, np.max(output_data[0])
 
@@ -87,14 +93,9 @@ class Predictor():
 
 
     def run(self):
-        while True:
-            if self.current_prediction is not None:
-                pred, conf = self.current_prediction
-                conf = round(conf * 100, 1)
-                print('DOA: {:>3} degrees [{:>5}%]'.format(pred, conf), end='\r')
-            else:
-                print('{:<25}'.format('[No prediction]'), end='\r')
-
-
-predictor = Predictor()
-predictor.run()
+        if self.current_prediction is not None:
+            pred, conf = self.current_prediction
+            conf = round(conf * 100, 1)
+            print('DOA: {:>3} degrees [{:>5}%]'.format(pred, conf), end='\r')
+        else:
+            print('{:<25}'.format('[No prediction]'), end='\r')
