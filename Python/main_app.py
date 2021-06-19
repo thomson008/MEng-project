@@ -36,10 +36,6 @@ def create_canvas():
 
         text = C.create_text(text_x, text_y, fill="darkblue", font="Arial 11 bold", text=str(i))
 
-    
-
-    C.pack()
-
     C.place(x=(HEIGHT-DIM) / 2, y=(HEIGHT-DIM) / 2)
 
     return C
