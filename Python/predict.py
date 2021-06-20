@@ -6,6 +6,8 @@ import math
 import tensorflow as tf
 from alsa_suppress import noalsaerr
 import platform
+import pathlib
+import os
 
 class Predictor():
     def __init__(self, thresh=300):
@@ -50,7 +52,9 @@ class Predictor():
     def init_model(self):
         print('Loading model...')
         # Load the TFLite model and allocate tensors.
-        self.interpreter = tf.lite.Interpreter(model_path="../models/model.tflite")
+        base_dir = pathlib.Path(__file__).parent.parent.absolute()
+        model_file = os.path.join(base_dir, 'models', 'model.tflite')
+        self.interpreter = tf.lite.Interpreter(model_path=model_file)
 
         print('Allocating tensors...\n')
         self.interpreter.allocate_tensors()
