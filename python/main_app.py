@@ -1,10 +1,11 @@
-from tkinter import *
 import math
-import time
-import numpy as np
-from utils import RESOLUTION
-from predict import Predictor
 import sys
+from tkinter import *
+
+import numpy as np
+
+from predict import Predictor
+from utils import RESOLUTION
 
 # Window size
 WIDTH = 1000
@@ -28,15 +29,15 @@ def create_canvas():
 
     # Create the segmented circle in the middle of the canvas
     for i in range(0, 360, 10):
-        arc = C.create_arc(COORD, start=i-RESOLUTION//2, extent=RESOLUTION, fill='#ebe8e8', outline='#595959')
+        C.create_arc(COORD, start=i - RESOLUTION // 2, extent=RESOLUTION, fill='#ebe8e8', outline='#595959')
 
         text_R = RADIUS + 20
         text_x = DIM / 2 + text_R * math.cos(math.radians(i))
         text_y = DIM / 2 - text_R * math.sin(math.radians(i))
 
-        text = C.create_text(text_x, text_y, fill="darkblue", font="Arial 11 bold", text=str(i))
+        C.create_text(text_x, text_y, fill="darkblue", font="Arial 11 bold", text=str(i))
 
-    C.place(x=(HEIGHT-DIM) / 2, y=(HEIGHT-DIM) / 2)
+    C.place(x=(HEIGHT - DIM) / 2, y=(HEIGHT - DIM) / 2)
 
     return C
 
@@ -58,7 +59,7 @@ def color_arcs(C, confs, max_idx):
             fill = '#ffadad'
             outline = '#db6b6b'
 
-        arc = C.create_arc(coord, start=i*RESOLUTION-5, extent=RESOLUTION, fill=fill, outline=outline, width=2)
+        arc = C.create_arc(coord, start=i * RESOLUTION - 5, extent=RESOLUTION, fill=fill, outline=outline, width=2)
         arcs.append(arc)
 
     top.update()
@@ -73,23 +74,23 @@ def create_labels():
 
     label = Label(top, text="CNN DOA")
     label.config(font=("Arial", 40), fg="#4a4a4a")
-    label.place(x=x , y=25)
+    label.place(x=x, y=25)
 
-    doa_label = Label(top, text = "Angle")
+    doa_label = Label(top, text="Angle")
     doa_label.config(font=("Arial", 14), fg="#4a4a4a")
-    doa_label.place(x=x , y=120)
+    doa_label.place(x=x, y=120)
 
     conf_label = Label(top, text="Confidence")
     conf_label.config(font=("Arial", 14), fg="#4a4a4a")
-    conf_label.place(x=x , y=320)
+    conf_label.place(x=x, y=320)
 
-    doa_val = Label(top, text = "-")
+    doa_val = Label(top, text="-")
     doa_val.config(font=("Arial", 40))
-    doa_val.place(x=x , y=150)
+    doa_val.place(x=x, y=150)
 
-    conf_val = Label(top, text = "-")
-    conf_val.config(font =("Arial", 40))
-    conf_val.place(x=x , y=350)
+    conf_val = Label(top, text="-")
+    conf_val.config(font=("Arial", 40))
+    conf_val.place(x=x, y=350)
 
     return doa_label, doa_val, conf_label, conf_val
 

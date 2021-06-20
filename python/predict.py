@@ -1,18 +1,42 @@
-import pyaudio
-import numpy as np
-from utils import *
-from itertools import combinations
-import math
-import tensorflow as tf
-from alsa_suppress import noalsaerr
-import platform
-import pathlib
 import os
+import pathlib
+import platform
 
-class Predictor():
+import tensorflow as tf
+
+from alsa_suppress import noalsaerr
+from utils import *
+
+
+def init_model():
+    print('Loading model...')
+    # Load the TFLite model and allocate tensors.
+    base_dir = pathlib.Path(__file__).parent.parent.absolute()
+    model_file = os.path.join(base_dir, 'models', 'model.tflite')
+    interpreter = tf.lite.Interpreter(model_path=model_file)
+
+    print('Allocating tensors...\n')
+    interpreter.allocate_tensors()
+
+    # Get input and output tensors.
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    input_shape = input_details[0]['shape']
+    output_shape = output_details[0]['shape']
+
+    print('Input tensor: ' + str(input_shape))
+    print('Output tensor: ' + str(output_shape))
+
+    print('\nModel ready. Starting inference:\n')
+
+    return interpreter, input_details, output_details
+
+
+class Predictor:
     def __init__(self, thresh=300):
         self.current_prediction = None
-        self.confidences = np.zeros(360//RESOLUTION)
+        self.confidences = np.zeros(360 // RESOLUTION)
         self.thresh = thresh
 
         if platform.system() == 'Windows':
@@ -27,8 +51,7 @@ class Predictor():
         )
 
         self.stream.start_stream()
-        self.init_model()
-
+        self.interpreter, self.input_details, self.output_details = init_model()
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.frombuffer(in_data, dtype=np.int16)
@@ -42,44 +65,19 @@ class Predictor():
             self.current_prediction = self.get_prediction_from_model(mic_data)
         else:
             self.current_prediction = None
-            self.confidences = np.zeros(360//RESOLUTION)
+            self.confidences = np.zeros(360 // RESOLUTION)
 
         self.run()
-        
-        return (data, pyaudio.paContinue)
 
+        return data, pyaudio.paContinue
 
-    def init_model(self):
-        print('Loading model...')
-        # Load the TFLite model and allocate tensors.
-        base_dir = pathlib.Path(__file__).parent.parent.absolute()
-        model_file = os.path.join(base_dir, 'models', 'model.tflite')
-        self.interpreter = tf.lite.Interpreter(model_path=model_file)
-
-        print('Allocating tensors...\n')
-        self.interpreter.allocate_tensors()
-
-        # Get input and output tensors.
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
-
-        input_shape = self.input_details[0]['shape']
-        output_shape = self.output_details[0]['shape']
-
-        print('Input tensor: ' + str(input_shape))
-        print('Output tensor: ' + str(output_shape))
-
-        print('\nModel ready. Starting inference:\n')
-
-    
     def end_stream(self):
         # stop stream
         self.stream.stop_stream()
-        stream.close()
+        self.stream.close()
 
         # close PyAudio
         self.p.terminate()
-
 
     def get_prediction_from_model(self, mic_data):
         gcc_matrix = np.transpose(compute_gcc_matrix(mic_data))
@@ -96,7 +94,6 @@ class Predictor():
         prediction, confidence = np.argmax(output_data[0]) * RESOLUTION, np.max(output_data[0])
 
         return prediction, confidence
-
 
     def run(self):
         if self.current_prediction is not None:
