@@ -34,7 +34,7 @@ def init_model():
 
 
 class Predictor:
-    def __init__(self, thresh=300):
+    def __init__(self, thresh=50):
         self.current_prediction = None
         self.confidences = np.zeros(360 // RESOLUTION)
         self.thresh = thresh
