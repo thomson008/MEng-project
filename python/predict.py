@@ -35,12 +35,14 @@ def init_model():
 
 class Predictor:
     def __init__(self, thresh=50):
+        self.is_active = False
         self.current_prediction = None
         self.confidences = np.zeros(360 // RESOLUTION)
         self.thresh = thresh
 
         if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
+            self.thresh = 300
         else:
             with noalsaerr():
                 self.p = pyaudio.PyAudio()
@@ -61,7 +63,7 @@ class Predictor:
         # in order to match the simulated microphone array
         mic_data = np.hstack([data[:, 1].reshape(-1, 1), data[:, -2:1:-1]])
 
-        if abs(np.max(mic_data)) > self.thresh:
+        if abs(np.max(mic_data)) > self.thresh and self.is_active:
             self.current_prediction = self.get_prediction_from_model(mic_data)
         else:
             self.current_prediction = None
