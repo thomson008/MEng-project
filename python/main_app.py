@@ -88,10 +88,8 @@ def create_labels():
     el_conf_label, el_conf_val, elevation_label, elevation_val = create_doa_labels(
         'Elevation', value_font_size, x, x_shift, y_elevation, y_shift)
 
-    el_conf_val.config(fg='gray')
-    elevation_val.config(fg='gray')
-
-    return azimuth_label, azimuth_val, az_conf_label, az_conf_val
+    return azimuth_label, azimuth_val, az_conf_label, az_conf_val, \
+        elevation_label, elevation_val, el_conf_label, el_conf_val
 
 
 def create_doa_labels(text, value_font_size, x, x_shift, y, y_shift):
@@ -136,7 +134,7 @@ def toggle_prediction():
 
 def start_app():
     C = create_canvas()
-    doa_label, doa_val, conf_label, conf_val = create_labels()
+    az_label, az_val, az_conf_label, az_conf_val, el_label, el_val, el_conf_label, el_conf_val = create_labels()
 
     exit_button = Button(data_frame, text="Exit", command=top.destroy,
                          height=2, width=10, font=("Arial", 12), cursor="hand2")
@@ -148,7 +146,7 @@ def start_app():
         predictor.is_active = prediction_running
 
         # Get probabilities from model
-        confs = predictor.confidences
+        confs = predictor.az_confidences
         max_idx = np.argmax(confs)
 
         # Color arcs based on model probabilities
@@ -157,16 +155,22 @@ def start_app():
         except TclError:
             sys.exit()
 
-        prediction = predictor.current_prediction
+        az_prediction = predictor.az_current_prediction
+        el_prediction = predictor.el_current_prediction
 
-        if prediction is not None:
-            pred, conf = prediction
+        if az_prediction is not None:
+            (pred, conf), (el_pred, el_conf) = az_prediction, el_prediction
             conf = round(conf * 100, 1)
-            doa_val.config(text=f'{pred}\N{DEGREE SIGN}')
-            conf_val.config(text=f'{conf}%')
+            el_conf = round(el_conf * 100, 1)
+            az_val.config(text=f'{pred}\N{DEGREE SIGN}')
+            az_conf_val.config(text=f'{conf}%')
+            el_val.config(text=f'{el_pred}\N{DEGREE SIGN}')
+            el_conf_val.config(text=f'{el_conf}%')
         else:
-            doa_val.config(text='-')
-            conf_val.config(text='-')
+            az_val.config(text='-')
+            az_conf_val.config(text='-')
+            el_val.config(text='-')
+            el_conf_val.config(text='-')
 
 
 top = Tk()

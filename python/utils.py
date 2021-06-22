@@ -3,7 +3,7 @@ import numpy as np
 import math
 from itertools import combinations
 
-CHUNK = 4096
+CHUNK = 2048
 RATE = 22050
 CHANNELS = 8
 FORMAT = pyaudio.paInt16

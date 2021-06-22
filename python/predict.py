@@ -9,35 +9,45 @@ from utils import *
 
 
 def init_model():
-    print('Loading model...')
+    print('Loading models...')
     # Load the TFLite model and allocate tensors.
     base_dir = pathlib.Path(__file__).parent.parent.absolute()
-    model_file = os.path.join(base_dir, 'models', 'model.tflite')
-    interpreter = tf.lite.Interpreter(model_path=model_file)
+    az_model_file = os.path.join(base_dir, 'models', 'model.tflite')
+    el_model_file = os.path.join(base_dir, 'models', 'elevation_model.tflite')
+    az_interpreter = tf.lite.Interpreter(model_path=az_model_file)
+    el_interpreter = tf.lite.Interpreter(model_path=el_model_file)
 
-    print('Allocating tensors...\n')
-    interpreter.allocate_tensors()
+    print('Allocating tensors...')
+    az_interpreter.allocate_tensors()
+    el_interpreter.allocate_tensors()
+    print('Tensors allocated.\n')
 
-    # Get input and output tensors.
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
+    # Get input and output tensors for both models
+    az_input_details = az_interpreter.get_input_details()
+    az_output_details = az_interpreter.get_output_details()
+    az_input_shape = az_input_details[0]['shape']
+    az_output_shape = az_output_details[0]['shape']
 
-    input_shape = input_details[0]['shape']
-    output_shape = output_details[0]['shape']
+    el_input_details = el_interpreter.get_input_details()
+    el_output_details = el_interpreter.get_output_details()
+    el_input_shape = el_input_details[0]['shape']
+    el_output_shape = el_output_details[0]['shape']
 
-    print('Input tensor: ' + str(input_shape))
-    print('Output tensor: ' + str(output_shape))
+    print('Azimuth model input tensor: ' + str(az_input_shape))
+    print('Azimuth model output tensor: ' + str(az_output_shape))
+    print('Elevation model input tensor: ' + str(el_input_shape))
+    print('Elevation model output tensor: ' + str(el_output_shape))
+    print('\nModels ready. Starting inference:\n')
 
-    print('\nModel ready. Starting inference:\n')
-
-    return interpreter, input_details, output_details
+    return az_interpreter, az_input_details, az_output_details, el_interpreter, el_input_details, el_output_details
 
 
 class Predictor:
     def __init__(self, thresh=50):
         self.is_active = False
-        self.current_prediction = None
-        self.confidences = np.zeros(360 // RESOLUTION)
+        self.az_current_prediction = None
+        self.el_current_prediction = None
+        self.az_confidences = np.zeros(360 // RESOLUTION)
         self.thresh = thresh
 
         if platform.system() == 'Windows':
@@ -53,7 +63,8 @@ class Predictor:
         )
 
         self.stream.start_stream()
-        self.interpreter, self.input_details, self.output_details = init_model()
+        self.az_interpreter, self.input_details, self.az_output_details, \
+            self.el_interpreter, self.el_input_details, self.el_output_details = init_model()
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.frombuffer(in_data, dtype=np.int16)
@@ -64,13 +75,14 @@ class Predictor:
         mic_data = np.hstack([data[:, 1].reshape(-1, 1), data[:, -2:1:-1]])
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
-            self.current_prediction = self.get_prediction_from_model(mic_data)
+            self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_model(mic_data)
+
         else:
-            self.current_prediction = None
-            self.confidences = np.zeros(360 // RESOLUTION)
+            self.az_current_prediction = None
+            self.az_confidences = np.zeros(360 // RESOLUTION)
+            self.el_current_prediction = None
 
-        self.run()
-
+        self.output_predictions()
         return data, pyaudio.paContinue
 
     def end_stream(self):
@@ -85,22 +97,32 @@ class Predictor:
         gcc_matrix = np.transpose(compute_gcc_matrix(mic_data))
         input_data = np.array([gcc_matrix], dtype=np.float32)
 
-        # Set input and run interpreter
-        self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
-        self.interpreter.invoke()
-        output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
+        # Set input and run azimuth interpreter
+        self.az_interpreter.set_tensor(self.input_details[0]['index'], input_data)
+        self.az_interpreter.invoke()
+        az_output_data = self.az_interpreter.get_tensor(self.az_output_details[0]['index'])
+        self.az_confidences = az_output_data[0]
 
-        self.confidences = output_data[0]
+        # Get the predicted azimuth as argument of the max probability
+        az_prediction, az_confidence = np.argmax(az_output_data[0]) * RESOLUTION, np.max(az_output_data[0])
 
-        # Get the predicted DOA as argument of the max probability
-        prediction, confidence = np.argmax(output_data[0]) * RESOLUTION, np.max(output_data[0])
+        # Set input and run elevation interpreter
+        self.el_interpreter.set_tensor(self.el_input_details[0]['index'], input_data)
+        self.el_interpreter.invoke()
+        el_output_data = self.el_interpreter.get_tensor(self.el_output_details[0]['index'])
 
-        return prediction, confidence
+        # Get the predicted elevation as argument of the max probability
+        el_prediction, el_confidence = np.argmax(el_output_data[0]) * RESOLUTION, np.max(el_output_data[0])
 
-    def run(self):
-        if self.current_prediction is not None:
-            pred, conf = self.current_prediction
-            conf = round(conf * 100, 1)
-            print('DOA: {:>3} degrees [{:>5}%]'.format(pred, conf), end='\r')
+        return (az_prediction, az_confidence), (el_prediction, el_confidence)
+
+    def output_predictions(self):
+        if self.az_current_prediction is not None:
+            az_pred, az_conf = self.az_current_prediction
+            el_pred, el_conf = self.el_current_prediction
+            az_conf = round(az_conf * 100, 1)
+            el_conf = round(el_conf * 100, 1)
+            print('Azimuth: {:>3} degrees [{:>5}%]'.format(az_pred, az_conf), end=' | ')
+            print('Elevation: {:>3} degrees [{:>5}%]'.format(el_pred, el_conf), end='\r')
         else:
             print('{:<25}'.format('[No prediction]'), end='\r')
