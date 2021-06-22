@@ -125,4 +125,4 @@ class Predictor:
             print('Azimuth: {:>3} degrees [{:>5}%]'.format(az_pred, az_conf), end=' | ')
             print('Elevation: {:>3} degrees [{:>5}%]'.format(el_pred, el_conf), end='\r')
         else:
-            print('{:<25}'.format('[No prediction]'), end='\r')
+            print('{:<63}'.format('[No prediction]'), end='\r')
