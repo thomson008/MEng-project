@@ -63,7 +63,7 @@ class Predictor:
         )
 
         self.stream.start_stream()
-        self.az_interpreter, self.input_details, self.az_output_details, \
+        self.az_interpreter, self.az_input_details, self.az_output_details, \
             self.el_interpreter, self.el_input_details, self.el_output_details = init_model()
 
     def callback(self, in_data, frame_count, time_info, status):
@@ -98,7 +98,7 @@ class Predictor:
         input_data = np.array([gcc_matrix], dtype=np.float32)
 
         # Set input and run azimuth interpreter
-        self.az_interpreter.set_tensor(self.input_details[0]['index'], input_data)
+        self.az_interpreter.set_tensor(self.az_input_details[0]['index'], input_data)
         self.az_interpreter.invoke()
         az_output_data = self.az_interpreter.get_tensor(self.az_output_details[0]['index'])
         self.az_confidences = az_output_data[0]
