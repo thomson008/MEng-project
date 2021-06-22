@@ -153,6 +153,7 @@ def start_app():
         try:
             color_arcs(C, confs, max_idx)
         except TclError:
+            print()
             sys.exit()
 
         az_prediction = predictor.az_current_prediction
