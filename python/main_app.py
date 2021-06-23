@@ -73,7 +73,7 @@ def color_arcs(C, confs, max_idx):
 def create_labels():
     x = 40
     x_shift = 140
-    value_font_size = 30
+    value_font_size = 25
 
     label = Label(data_frame, text="CNN DOA")
     label.config(font=("Arial", 40), fg="#4a4a4a")

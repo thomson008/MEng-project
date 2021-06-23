@@ -8,11 +8,11 @@ from alsa_suppress import noalsaerr
 from utils import *
 
 
-def init_model():
+def init_models():
     print('Loading models...')
     # Load the TFLite model and allocate tensors.
     base_dir = pathlib.Path(__file__).parent.parent.absolute()
-    az_model_file = os.path.join(base_dir, 'models', 'model.tflite')
+    az_model_file = os.path.join(base_dir, 'models', 'azimuth_model.tflite')
     el_model_file = os.path.join(base_dir, 'models', 'elevation_model_new.tflite')
     az_interpreter = tf.lite.Interpreter(model_path=az_model_file)
     el_interpreter = tf.lite.Interpreter(model_path=el_model_file)
@@ -43,12 +43,17 @@ def init_model():
 
 
 class Predictor:
-    def __init__(self, thresh=50):
+    def __init__(self, thresh=50, max_silence_frames=10):
+        # Model parameters
         self.is_active = False
         self.az_current_prediction = None
         self.el_current_prediction = None
         self.az_confidences = np.zeros(360 // RESOLUTION)
+
+        # Thresholds for deciding whether to run or not
         self.thresh = thresh
+        self.silent_frames = 0
+        self.max_silence_frames = max_silence_frames
 
         if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
@@ -64,7 +69,7 @@ class Predictor:
 
         self.stream.start_stream()
         self.az_interpreter, self.az_input_details, self.az_output_details, \
-            self.el_interpreter, self.el_input_details, self.el_output_details = init_model()
+            self.el_interpreter, self.el_input_details, self.el_output_details = init_models()
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.frombuffer(in_data, dtype=np.int16)
@@ -75,12 +80,15 @@ class Predictor:
         mic_data = np.hstack([data[:, 1].reshape(-1, 1), data[:, -2:1:-1]])
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
-            self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_model(mic_data)
+            self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_models(mic_data)
 
         else:
-            self.az_current_prediction = None
-            self.az_confidences = np.zeros(360 // RESOLUTION)
-            self.el_current_prediction = None
+            self.silent_frames += 1
+            if self.silent_frames == self.max_silence_frames:
+                self.silent_frames = 0
+                self.az_current_prediction = None
+                self.az_confidences = np.zeros(360 // RESOLUTION)
+                self.el_current_prediction = None
 
         self.output_predictions()
         return data, pyaudio.paContinue
@@ -93,7 +101,7 @@ class Predictor:
         # close PyAudio
         self.p.terminate()
 
-    def get_prediction_from_model(self, mic_data):
+    def get_prediction_from_models(self, mic_data):
         gcc_matrix = np.transpose(compute_gcc_matrix(mic_data))
         input_data = np.array([gcc_matrix], dtype=np.float32)
 
