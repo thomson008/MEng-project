@@ -83,12 +83,12 @@ class Predictor:
             self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_models(mic_data)
 
         else:
-            self.silent_frames += 1
             if self.silent_frames == self.max_silence_frames:
                 self.silent_frames = 0
                 self.az_current_prediction = None
                 self.az_confidences = np.zeros(360 // RESOLUTION)
                 self.el_current_prediction = None
+            self.silent_frames += 1
 
         self.output_predictions()
         return data, pyaudio.paContinue
