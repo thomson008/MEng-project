@@ -35,7 +35,7 @@ def create_model(X_train, y_train, X_test, y_test):
 def evaluate_model(model, X_test, y_test):
     loss, accuracy = model.evaluate(X_test, y_test, batch_size=batch_size, verbose=verbose)
     y_pred = model.predict(X_test)
-    return round(accuracy, 3), rmse(y_test, y_pred)
+    return round(accuracy, 3)
 
 
 def rmse(y_true, y_pred):
