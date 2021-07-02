@@ -29,9 +29,20 @@ def create_model(X_train, y_train, X_test, y_test):
 
     history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=verbose)
     
-    return model
+    return model, history
 
 
 def evaluate_model(model, X_test, y_test):
     loss, accuracy = model.evaluate(X_test, y_test, batch_size=batch_size, verbose=verbose)
-    return round(accuracy, 3)
+    y_pred = model.predict(X_test)
+    return round(accuracy, 3), rmse(y_test, y_pred)
+
+
+def rmse(y_true, y_pred):
+    total = sum(min(abs(y_t - y_p), (360 - abs(y_t - y_p))) ** 2 for y_t, y_p in zip(y_true, y_pred))
+    rms = ((total / len(y_true)) ** 0.5)
+    
+    if type(rms) == np.ndarray:
+        rms = rms[0]
+        
+    return round(rms, 3)
