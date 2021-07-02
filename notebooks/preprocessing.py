@@ -7,6 +7,7 @@ import sys
 import os
 from collections import defaultdict
 from itertools import combinations
+from pyroomacoustics.transform import stft
 
 # Training rooms dimensions
 ROOMS = {
@@ -94,7 +95,20 @@ def compute_gcc_matrix(observation, fs):
     return transformed_observation
 
 
-def create_observations(wav_signals, fs, label, samples=1, step=1, resolution=20):
+def compute_stft_matrix(observation, nfft=256):
+    """
+    Creates a STFT matrix using microphone data from 6 channels.
+    """
+    
+    # Default value for overlap
+    step = nfft // 2
+    
+    # Calculate multidimensional STFT and return
+    transformed_observation = stft.analysis(observation, L=nfft, hop=step)
+    return np.transpose(transformed_observation, axes=[2, 1, 0])
+
+
+def create_observations(wav_signals, fs, label, samples=1, step=1, resolution=20, music=False):
     """
     Create list of observations from the pandas dataframe.
     Each observation will be a GCC matrix, where each row 
@@ -118,8 +132,12 @@ def create_observations(wav_signals, fs, label, samples=1, step=1, resolution=20
         # Extract the observation from subframe
         observation = np.array(wav_signals[i : i + samples])
         
-        # Transform observation into a GCC matrix
-        transformed_observation = compute_gcc_matrix(observation, fs)
+        if music:
+            # Transform observation into a STFT matrix
+            transformed_observation = compute_stft_matrix(observation)
+        else:
+            # Transform observation into a GCC matrix
+            transformed_observation = compute_gcc_matrix(observation, fs)
             
         X.append(transformed_observation)
 
