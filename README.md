@@ -19,7 +19,7 @@ MEng-project
 │ 
 └───training_data
     └───audio
-        └───testing
+        └───training
         │
         └───testing
 ```
