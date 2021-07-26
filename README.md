@@ -1,8 +1,8 @@
 ### Folder structure
-In this Code folder, the following subfolders are included:
+In this MEng-project, the following subfolders are included:
 
 ```
-Code
+MEng-project
 │   README.md  
 │
 └───models
