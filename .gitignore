@@ -1,5 +1,22 @@
 .ipynb_checkpoints
 .vscode
 __pycache__
-training_data/
 .idea
+
+# exclude everything
+training_data/*
+
+# exception to the rule
+!training_data/audio
+
+# exclude everything
+training_data/audio/horizontal/*
+
+# exception to the rule
+!training_data/audio/horizontal/.gitkeep
+
+# exclude everything
+training_data/audio/vertical/*
+
+# exception to the rule
+!training_data/audio/vertical/.gitkeep 
