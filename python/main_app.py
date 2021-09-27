@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import math
+import sys
 from tkinter import *
 
 import numpy as np
