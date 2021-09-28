@@ -37,7 +37,7 @@ def init_models():
     print('Azimuth model output tensor: ' + str(az_output_shape))
     print('Elevation model input tensor: ' + str(el_input_shape))
     print('Elevation model output tensor: ' + str(el_output_shape))
-    print('\nModels ready. Starting inference:\n')
+    print('\nModels ready. Press Start to begin inference.\n')
 
     return az_interpreter, az_input_details, az_output_details, el_interpreter, el_input_details, el_output_details
 
@@ -81,7 +81,6 @@ class Predictor:
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
             self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_models(mic_data)
-
         else:
             if self.silent_frames == self.max_silence_frames:
                 self.silent_frames = 0
@@ -89,8 +88,9 @@ class Predictor:
                 self.az_confidences = np.zeros(360 // RESOLUTION)
                 self.el_current_prediction = None
             self.silent_frames += 1
+        if self.is_active:
+            self.output_predictions()
 
-        self.output_predictions()
         return data, pyaudio.paContinue
 
     def end_stream(self):
@@ -131,6 +131,6 @@ class Predictor:
             az_conf = round(az_conf * 100, 1)
             el_conf = round(el_conf * 100, 1)
             print('Azimuth: {:>3} degrees [{:>5}%]'.format(az_pred, az_conf), end=' | ')
-            print('Elevation: {:>3} degrees [{:>5}%]'.format(el_pred, el_conf), end='\r')
+            print('Elevation: {:>3} degrees [{:>5}%]'.format(el_pred, el_conf))
         else:
-            print('{:<63}'.format('[No prediction]'), end='\r')
+            print('{:<63}'.format('[No prediction]'))
