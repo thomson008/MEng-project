@@ -78,7 +78,7 @@ def compute_gcc_matrix(observation, fs):
     between a given pair of microphones.
     """ 
     
-    mic_pairs = combinations(range(6), r=2)
+    mic_pairs = combinations(range(MICS_NUMBER), r=2)
 
     # Initialize a transformed observation, that will be populated with GCC vectors
     # of the observation
@@ -225,7 +225,7 @@ def create_dataframe(subset, plane='horizontal', samples=20, step=5, resolution=
         
         cols = [
             f'mics{mic_1+1}{mic_2+1}_{i}' 
-                for mic_1, mic_2 in combinations(range(6), r=2) 
+                for mic_1, mic_2 in combinations(range(MICS_NUMBER), r=2) 
                     for i in range(np.shape(X_temp)[2])
         ]
         

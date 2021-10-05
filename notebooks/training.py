@@ -7,6 +7,7 @@ from keras.layers import Flatten
 from keras.layers import Dropout
 from keras.layers import Conv1D
 from keras.layers import MaxPooling1D
+import numpy as np
 
 epochs, batch_size, verbose = 20, 32, 1
 
