@@ -30,6 +30,8 @@ MICS_NUMBER = 6
 
 MIC_COMBS = len(list(combinations(range(MICS_NUMBER), 2)))
 
+FS = 44100
+
 
 def gcc_phat(x_1, x_2, FS=16000):
     """
@@ -177,9 +179,9 @@ def create_whole_dataset(df_train, df_test, encoder, room=None, dist=None):
         df_test = df_test[df_test.dist == dist]
     
     # Create train/test observations
-    X_train = df_train.drop(['dist', 'room', 'label'], 1).values.reshape(
+    X_train = df_train.drop(columns=['dist', 'room', 'label']).values.reshape(
         len(df_train), MIC_COMBS, -1)
-    X_test = df_test.drop(['dist', 'room', 'label'], 1).values.reshape(
+    X_test = df_test.drop(columns=['dist', 'room', 'label']).values.reshape(
         len(df_test), MIC_COMBS, -1)
     
     # Create train/test labels
@@ -219,7 +221,7 @@ def create_dataframe(subset, plane='horizontal', samples=20, step=5, resolution=
         label = int(file.split('_')[2])
         
         # Create observations from a given WAV file
-        X_temp, y_temp = create_observations(wav_signals, fs, label, samples, step, resolution)
+        X_temp, y_temp = create_observations(wav_signals, FS, label, samples, step, resolution)
         
         cols = [
             f'mics{mic_1+1}{mic_2+1}_{i}' 
