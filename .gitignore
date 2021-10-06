@@ -19,4 +19,10 @@ training_data/audio/horizontal/*
 training_data/audio/vertical/*
 
 # exception to the rule
-!training_data/audio/vertical/.gitkeep 
+!training_data/audio/vertical/.gitkeep
+
+# exclude everything
+training_data/audio/multi_source/*
+
+# exception to the rule
+!training_data/audio/multi_source/.gitkeep 
