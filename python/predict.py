@@ -12,8 +12,8 @@ def init_models():
     print('Loading models...')
     # Load the TFLite model and allocate tensors.
     base_dir = pathlib.Path(__file__).parent.parent.absolute()
-    az_model_file = os.path.join(base_dir, 'models', 'azimuth_model.tflite')
-    el_model_file = os.path.join(base_dir, 'models', 'elevation_model_new.tflite')
+    az_model_file = os.path.join(base_dir, 'models', 'super_azimuth_model.tflite')
+    el_model_file = os.path.join(base_dir, 'models', 'elevation_model.tflite')
     az_interpreter = tf.lite.Interpreter(model_path=az_model_file)
     el_interpreter = tf.lite.Interpreter(model_path=el_model_file)
 
@@ -48,7 +48,7 @@ class Predictor:
         self.is_active = False
         self.az_current_prediction = None
         self.el_current_prediction = None
-        self.az_confidences = np.zeros(360 // RESOLUTION)
+        self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
 
         # Thresholds for deciding whether to run or not
         self.thresh = thresh
@@ -57,7 +57,7 @@ class Predictor:
 
         if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
-            self.thresh = 300
+            self.thresh = 50
         else:
             with noalsaerr():
                 self.p = pyaudio.PyAudio()
@@ -85,7 +85,7 @@ class Predictor:
             if self.silent_frames == self.max_silence_frames:
                 self.silent_frames = 0
                 self.az_current_prediction = None
-                self.az_confidences = np.zeros(360 // RESOLUTION)
+                self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
                 self.el_current_prediction = None
             self.silent_frames += 1
         if self.is_active:
@@ -112,7 +112,7 @@ class Predictor:
         self.az_confidences = az_output_data[0]
 
         # Get the predicted azimuth as argument of the max probability
-        az_prediction, az_confidence = np.argmax(az_output_data[0]) * RESOLUTION, np.max(az_output_data[0])
+        az_prediction, az_confidence = np.argmax(az_output_data[0]) * AZIMUTH_RESOLUTION, np.max(az_output_data[0])
 
         # Set input and run elevation interpreter
         self.el_interpreter.set_tensor(self.el_input_details[0]['index'], input_data)
@@ -120,7 +120,7 @@ class Predictor:
         el_output_data = self.el_interpreter.get_tensor(self.el_output_details[0]['index'])
 
         # Get the predicted elevation as argument of the max probability
-        el_prediction, el_confidence = np.argmax(el_output_data[0]) * RESOLUTION, np.max(el_output_data[0])
+        el_prediction, el_confidence = np.argmax(el_output_data[0]) * ELEVATION_RESOLUTION, np.max(el_output_data[0])
 
         return (az_prediction, az_confidence), (el_prediction, el_confidence)
 

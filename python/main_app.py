@@ -7,7 +7,7 @@ from tkinter import *
 import numpy as np
 
 from predict import Predictor
-from utils import RESOLUTION
+from utils import UI_RESOLUTION
 
 # Window size
 WIDTH = 1000
@@ -30,8 +30,8 @@ def create_canvas():
     C = Canvas(circle_frame, bg="white", height=DIM, width=DIM)
 
     # Create the segmented circle in the middle of the canvas
-    for i in range(0, 360, 10):
-        C.create_arc(COORD, start=i - RESOLUTION // 2, extent=RESOLUTION, fill='#ebe8e8', outline='#595959')
+    for i in range(0, 360, UI_RESOLUTION):
+        C.create_arc(COORD, start=i - UI_RESOLUTION // 2, extent=UI_RESOLUTION, fill='#ebe8e8', outline='#595959')
 
         text_R = RADIUS + 20
         text_x = DIM / 2 + text_R * math.cos(math.radians(i))
@@ -61,7 +61,8 @@ def color_arcs(C, confs, max_idx):
             fill = '#ffadad'
             outline = '#db6b6b'
 
-        arc = C.create_arc(coord, start=i * RESOLUTION - 5, extent=RESOLUTION, fill=fill, outline=outline, width=2)
+        arc = C.create_arc(coord, start=i * UI_RESOLUTION - 5,
+                           extent=UI_RESOLUTION, fill=fill, outline=outline, width=2)
         arcs.append(arc)
 
     top.update()
@@ -147,12 +148,13 @@ def start_app():
         predictor.is_active = prediction_running
 
         # Get probabilities from model
-        confs = predictor.az_confidences
-        max_idx = np.argmax(confs)
+        all_confs = np.roll(predictor.az_confidences, UI_RESOLUTION // 2)
+        display_confs = [sum(group) for group in np.split(all_confs, 360 // UI_RESOLUTION)]
+        max_idx = np.argmax(display_confs)
 
         # Color arcs based on model probabilities
         try:
-            color_arcs(C, confs, max_idx)
+            color_arcs(C, display_confs, max_idx)
         except TclError:
             print()
             sys.exit()

@@ -7,10 +7,12 @@ CHUNK = 2048
 RATE = 22050
 CHANNELS = 8
 FORMAT = pyaudio.paInt16
-RESOLUTION = 10
+AZIMUTH_RESOLUTION = 1
+ELEVATION_RESOLUTION = 10
+UI_RESOLUTION = 10
 
 
-def gcc_phat(x_1, x_2):
+def gcc_phat(x_1, x_2, interp=2):
     """
     Function that will compute the GCC-PHAT
     cross-correlation of two separate audio channels
@@ -33,13 +35,13 @@ def gcc_phat(x_1, x_2):
     # GCC-PHAT = [X_1(f)X_2*(f)] / |X_1(f)X_2*(f)|
     # See http://www.xavieranguera.com/phdthesis/node92.html for reference
     CC = X_1 * np.conj(X_2)
-    cc = np.fft.irfft(CC, n=n)
+    cc = np.fft.irfft(CC, n=n * interp)
 
     # Maximum delay between a pair of microphones,
     # expressed in a number of samples.
     # 0.09 m is the mic array diameter and
     # 340 m/s is assumed to be the speed of sound.
-    max_len = math.ceil(0.09 / 340 * RATE)
+    max_len = math.ceil(0.09 / 340 * RATE * interp)
 
     # Trim the cc vector to only include a
     # small number of samples around the origin
@@ -49,7 +51,7 @@ def gcc_phat(x_1, x_2):
     return cc
 
 
-def compute_gcc_matrix(observation):
+def compute_gcc_matrix(observation, interp=2):
     """
     Creates a GCC matrix, where each row is a vector of GCC 
     between a given pair of microphones.
@@ -66,7 +68,7 @@ def compute_gcc_matrix(observation):
         x_1 = observation[:, mic_1]
         x_2 = observation[:, mic_2]
 
-        gcc = gcc_phat(x_1, x_2)
+        gcc = gcc_phat(x_1, x_2, interp=interp)
 
         # Add the GCC vector to the GCC matrix
         transformed_observation.append(gcc)
