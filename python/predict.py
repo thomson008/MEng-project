@@ -57,7 +57,6 @@ class Predictor:
 
         if platform.system() == 'Windows':
             self.p = pyaudio.PyAudio()
-            self.thresh = 50
         else:
             with noalsaerr():
                 self.p = pyaudio.PyAudio()

@@ -149,7 +149,12 @@ def start_app():
 
         # Get probabilities from model
         all_confs = np.roll(predictor.az_confidences, UI_RESOLUTION // 2)
-        display_confs = [sum(group) for group in np.split(all_confs, 360 // UI_RESOLUTION)]
+        display_confs = [max(group) for group in np.split(all_confs, 360 // UI_RESOLUTION)]
+
+        # Normalize confidences to sum to 1
+        total = sum(display_confs)
+        if total:
+            display_confs /= total
         max_idx = np.argmax(display_confs)
 
         # Color arcs based on model probabilities
