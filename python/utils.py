@@ -3,8 +3,8 @@ import numpy as np
 import math
 from itertools import combinations
 
-CHUNK = 2048
-RATE = 22050
+CHUNK = 4096
+RATE = 44100
 CHANNELS = 8
 FORMAT = pyaudio.paInt16
 AZIMUTH_RESOLUTION = 1
@@ -12,7 +12,7 @@ ELEVATION_RESOLUTION = 10
 UI_RESOLUTION = 10
 
 
-def gcc_phat(x_1, x_2, interp=2):
+def gcc_phat(x_1, x_2, interp=1):
     """
     Function that will compute the GCC-PHAT
     cross-correlation of two separate audio channels
@@ -51,7 +51,7 @@ def gcc_phat(x_1, x_2, interp=2):
     return cc
 
 
-def compute_gcc_matrix(observation, interp=2):
+def compute_gcc_matrix(observation, interp=1):
     """
     Creates a GCC matrix, where each row is a vector of GCC 
     between a given pair of microphones.
