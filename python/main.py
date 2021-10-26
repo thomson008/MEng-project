@@ -1,6 +1,6 @@
 from tkinter import *
 
-from python.single_source_app import SingleSourceApp
+from single_source_app import SingleSourceApp
 
 
 class MainApp:

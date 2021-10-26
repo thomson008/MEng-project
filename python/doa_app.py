@@ -2,7 +2,7 @@ import copy
 import math
 from tkinter import *
 
-from python.utils import UI_RESOLUTION
+from utils import UI_RESOLUTION
 
 
 class DoaApp:

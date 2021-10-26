@@ -6,7 +6,7 @@ from tkinter import *
 import numpy as np
 
 from predict import Predictor
-from python.doa_app import DoaApp
+from doa_app import DoaApp
 from utils import UI_RESOLUTION
 
 
