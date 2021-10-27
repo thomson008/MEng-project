@@ -1,4 +1,3 @@
-import copy
 import math
 from tkinter import *
 
@@ -70,8 +69,32 @@ class DoaApp:
 
         return left_frame, right_frame
 
+    def create_doa_labels(self, text, value_font_size, x, x_shift, y, y_shift):
+        angle_label = Label(self.data_frame, text=text)
+        angle_label.config(font=("Arial", 14), fg="#4a4a4a")
+        angle_label.place(x=x, y=y)
+
+        conf_label = Label(self.data_frame, text="Confidence")
+        conf_label.config(font=("Arial", 14), fg="#4a4a4a")
+        conf_label.place(x=x + x_shift, y=y)
+
+        angle_val = Label(self.data_frame, text="-")
+        angle_val.config(font=("Arial", value_font_size))
+        angle_val.place(x=x, y=y + y_shift)
+
+        conf_val = Label(self.data_frame, text="-")
+        conf_val.config(font=("Arial", value_font_size))
+        conf_val.place(x=x + x_shift, y=y + y_shift)
+
+        return conf_label, conf_val, angle_label, angle_val
+
     def toggle_prediction(self):
         self.prediction_running = not self.prediction_running
 
         text = 'Stop' if self.prediction_running else 'Start'
         self.start_button.config(text=text, relief=SUNKEN if self.prediction_running else RAISED)
+
+    def create_title_label(self):
+        label = Label(self.data_frame, text="CNN DOA")
+        label.config(font=("Arial", 40), fg="#4a4a4a")
+        label.pack()

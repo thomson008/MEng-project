@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
-import sys
 from tkinter import *
 
 import numpy as np
 
-from predict import Predictor
+from single_source_predictor import SingleSourcePredictor
 from doa_app import DoaApp
 from utils import UI_RESOLUTION
 
@@ -38,14 +37,18 @@ class SingleSourceApp(DoaApp):
         for arc in arcs:
             C.delete(arc)
 
+    def create_title_label(self):
+        super().create_title_label()
+        label = Label(self.data_frame, text="Single source")
+        label.config(font=("Arial", 14), fg="#4a4a4a")
+        label.pack()
+
     def create_labels(self):
+        self.create_title_label()
+
         x = 40
         x_shift = 140
         value_font_size = 25
-
-        label = Label(self.data_frame, text="CNN DOA")
-        label.config(font=("Arial", 40), fg="#4a4a4a")
-        label.pack()
 
         y_shift = 30
         y_azimuth = 120
@@ -59,29 +62,10 @@ class SingleSourceApp(DoaApp):
         return azimuth_label, azimuth_val, az_conf_label, az_conf_val, \
             elevation_label, elevation_val, el_conf_label, el_conf_val
 
-    def create_doa_labels(self, text, value_font_size, x, x_shift, y, y_shift):
-        angle_label = Label(self.data_frame, text=text)
-        angle_label.config(font=("Arial", 14), fg="#4a4a4a")
-        angle_label.place(x=x, y=y)
-
-        conf_label = Label(self.data_frame, text="Confidence")
-        conf_label.config(font=("Arial", 14), fg="#4a4a4a")
-        conf_label.place(x=x + x_shift, y=y)
-
-        angle_val = Label(self.data_frame, text="-")
-        angle_val.config(font=("Arial", value_font_size))
-        angle_val.place(x=x, y=y + y_shift)
-
-        conf_val = Label(self.data_frame, text="-")
-        conf_val.config(font=("Arial", value_font_size))
-        conf_val.place(x=x + x_shift, y=y + y_shift)
-
-        return conf_label, conf_val, angle_label, angle_val
-
     def run(self):
         C = self.create_canvas()
         az_label, az_val, az_conf_label, az_conf_val, el_label, el_val, el_conf_label, el_conf_val = self.create_labels()
-        predictor = Predictor()
+        predictor = SingleSourcePredictor()
 
         while True:
             predictor.is_active = self.prediction_running
@@ -100,6 +84,7 @@ class SingleSourceApp(DoaApp):
             try:
                 self.color_arcs(C, display_confs, max_idx)
             except TclError:
+                predictor.is_active = False
                 return
 
             az_prediction = predictor.az_current_prediction

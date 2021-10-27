@@ -1,9 +1,11 @@
 from tkinter import *
 
+from multi_source_app import MultiSourceApp
 from single_source_app import SingleSourceApp
 
 
 class MainApp:
+    # Window size
     WIDTH = 1000
     HEIGHT = 650
 
@@ -19,15 +21,19 @@ class MainApp:
         self.single_source_button = Button(self.top, text="Single source", command=self.start_single_source,
                                            height=3, width=15, font=("Arial", 12), cursor="hand2")
         self.single_source_button.place(relx=0.4, rely=0.5, anchor=CENTER)
-        self.multi_source_button = Button(self.top, text="Multi source",
+        self.multi_source_button = Button(self.top, text="Multi source", command=self.start_multi_source,
                                           height=3, width=15, font=("Arial", 12), cursor="hand2")
         self.multi_source_button.place(relx=0.6, rely=0.5, anchor=CENTER)
-        self.top.mainloop()
 
     def start_single_source(self):
         single_source_app = SingleSourceApp(self.top)
         single_source_app.run()
 
+    def start_multi_source(self):
+        multi_source_app = MultiSourceApp(self.top)
+        multi_source_app.run()
+
 
 if __name__ == '__main__':
     app = MainApp()
+    app.top.mainloop()
