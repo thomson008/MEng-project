@@ -20,10 +20,10 @@ def get_input_matrix(mic_data):
 
 
 def get_model_details(az_interpreter):
-    az_input_details = az_interpreter.get_input_details()
-    az_output_details = az_interpreter.get_output_details()
-    az_input_shape = az_input_details[0]['shape']
-    az_output_shape = az_output_details[0]['shape']
+    az_input_details = az_interpreter.get_input_details()[0]
+    az_output_details = az_interpreter.get_output_details()[0]
+    az_input_shape = az_input_details['shape']
+    az_output_shape = az_output_details['shape']
     return az_input_details, az_input_shape, az_output_details, az_output_shape
 
 

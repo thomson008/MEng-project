@@ -1,6 +1,8 @@
 import os
 import pathlib
+import time
 
+import numpy as np
 import tensorflow as tf
 
 from predictor import Predictor, get_mic_data, get_input_matrix, get_model_details
@@ -46,6 +48,8 @@ class SingleSourcePredictor(Predictor):
             frames_per_buffer=CHUNK, stream_callback=self.callback
         )
 
+        self.exec_times = []
+
         self.stream.start_stream()
         self.az_interpreter, self.az_input_details, self.az_output_details, \
             self.el_interpreter, self.el_input_details, self.el_output_details = init_models()
@@ -54,7 +58,9 @@ class SingleSourcePredictor(Predictor):
         data, mic_data = get_mic_data(in_data)
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
-            self.az_current_prediction, self.el_current_prediction = self.get_prediction_from_models(mic_data)
+            input_data = get_input_matrix(mic_data)
+            self.az_current_prediction = self.get_azimuth_prediction(input_data)
+            self.el_current_prediction = self.get_elevation_prediction(input_data)
         else:
             if self.silent_frames == self.max_silence_frames:
                 self.silent_frames = 0
@@ -67,27 +73,45 @@ class SingleSourcePredictor(Predictor):
 
         return data, pyaudio.paContinue
 
-    def get_prediction_from_models(self, mic_data):
-        input_data = get_input_matrix(mic_data)
-
+    def get_azimuth_prediction(self, input_data):
         # Set input and run azimuth interpreter
-        self.az_interpreter.set_tensor(self.az_input_details[0]['index'], input_data)
+        if len(self.az_input_details['shape']) == 4:
+            print(self.az_input_details['shape'])
+            input_data = input_data[..., np.newaxis]
+
+        if self.az_input_details['dtype'] == np.uint8:
+            input_scale, input_zero_point = self.az_input_details["quantization"]
+            input_data = input_data / input_scale + input_zero_point
+
+        start_time = time.time()
+        self.az_interpreter.set_tensor(self.az_input_details['index'],
+                                       input_data.astype(self.az_input_details['dtype']))
         self.az_interpreter.invoke()
-        az_output_data = self.az_interpreter.get_tensor(self.az_output_details[0]['index'])
-        self.az_confidences = az_output_data[0]
+
+        az_output_data = self.az_interpreter.get_tensor(self.az_output_details['index'])[0]
+        execution_time = time.time() - start_time
+        self.exec_times.append(execution_time)
+
+        if self.az_output_details['dtype'] == np.uint8:
+            output_scale, output_zero_point = self.az_output_details["quantization"]
+            az_output_data = (az_output_data - output_zero_point) * output_scale
+
+        self.az_confidences = az_output_data
 
         # Get the predicted azimuth as argument of the max probability
-        az_prediction, az_confidence = np.argmax(az_output_data[0]) * AZIMUTH_RESOLUTION, np.max(az_output_data[0])
+        az_prediction, az_confidence = np.argmax(self.az_confidences) * AZIMUTH_RESOLUTION, np.max(self.az_confidences)
+        return az_prediction, az_confidence
 
+    def get_elevation_prediction(self, input_data):
         # Set input and run elevation interpreter
-        self.el_interpreter.set_tensor(self.el_input_details[0]['index'], input_data)
+        self.el_interpreter.set_tensor(self.el_input_details['index'], input_data)
         self.el_interpreter.invoke()
-        el_output_data = self.el_interpreter.get_tensor(self.el_output_details[0]['index'])
+        el_output_data = self.el_interpreter.get_tensor(self.el_output_details['index'])
 
         # Get the predicted elevation as argument of the max probability
         el_prediction, el_confidence = np.argmax(el_output_data[0]) * ELEVATION_RESOLUTION, np.max(el_output_data[0])
 
-        return (az_prediction, az_confidence), (el_prediction, el_confidence)
+        return el_prediction, el_confidence
 
     def output_predictions(self):
         if self.az_current_prediction is not None:

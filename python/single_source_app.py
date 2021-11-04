@@ -85,12 +85,14 @@ class SingleSourceApp(DoaApp):
                 self.color_arcs(C, display_confs, max_idx)
             except TclError:
                 predictor.is_active = False
+                inference_time = round(np.mean(predictor.exec_times) * 1000, 1) if predictor.exec_times else 'N/A'
+                print(f'Application closed. Average inference time (ms): {inference_time}')
                 return
 
             az_prediction = predictor.az_current_prediction
             el_prediction = predictor.el_current_prediction
 
-            if az_prediction is not None:
+            if not (az_prediction is None or el_prediction is None):
                 (pred, conf), (el_pred, el_conf) = az_prediction, el_prediction
                 conf = round(conf * 100, 1)
                 el_conf = round(el_conf * 100, 1)
