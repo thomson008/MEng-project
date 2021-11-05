@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
+import pyroomacoustics as pra
 
 from predictor import Predictor, get_mic_data, get_input_matrix, get_model_details
 from utils import *
@@ -59,7 +60,10 @@ class SingleSourcePredictor(Predictor):
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
             input_data = get_input_matrix(mic_data)
-            self.az_current_prediction = self.get_azimuth_prediction(input_data)
+            start_time = time.time()
+            stft_data = compute_stft_matrix(mic_data)
+            self.exec_times.append(time.time() - start_time)
+            self.az_current_prediction = self.get_music_prediction(stft_data)
             self.el_current_prediction = self.get_elevation_prediction(input_data)
         else:
             if self.silent_frames == self.max_silence_frames:
@@ -114,6 +118,25 @@ class SingleSourcePredictor(Predictor):
         el_prediction, el_confidence = np.argmax(el_output_data[0]) * ELEVATION_RESOLUTION, np.max(el_output_data[0])
 
         return el_prediction, el_confidence
+
+    def get_music_prediction(self, input_data):
+        mic_center = [2, 2]
+        mic_height = 1
+
+        # Radius constant, will always be the same for MiniDSP array
+        mic_radius = 0.045
+        R = pra.circular_2D_array(center=mic_center, M=6, phi0=0, radius=mic_radius)
+        R = np.vstack((R, [mic_height] * 6))
+
+        # Run MUSIC algorithm for DOA
+        doa = pra.doa.MUSIC(R, RATE, 256, n_grid=(360 // AZIMUTH_RESOLUTION))
+        doa.locate_sources(input_data)
+
+        prediction = round((doa.azimuth_recon[0] * 180 / math.pi))
+        self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
+        self.az_confidences[prediction] = 1
+
+        return round((doa.azimuth_recon[0] * 180 / math.pi)), 1
 
     def output_predictions(self):
         if self.az_current_prediction is not None:

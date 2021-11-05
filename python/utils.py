@@ -3,6 +3,8 @@ import numpy as np
 import math
 from itertools import combinations
 
+from pyroomacoustics.transform import stft
+
 CHUNK = 4096
 RATE = 44100
 CHANNELS = 8
@@ -74,3 +76,16 @@ def compute_gcc_matrix(observation, interp=1):
         transformed_observation.append(gcc)
 
     return transformed_observation
+
+
+def compute_stft_matrix(observation, nfft=256):
+    """
+    Creates a STFT matrix using microphone data from 6 channels.
+    """
+
+    # Default value for overlap
+    step = nfft // 2
+
+    # Calculate multidimensional STFT and return
+    transformed_observation = stft.analysis(observation, L=nfft, hop=step)
+    return np.transpose(transformed_observation, axes=[2, 1, 0])
