@@ -93,8 +93,10 @@ class SingleSourcePredictor(Predictor):
         self.exec_times.append(execution_time)
 
         if self.az_output_details['dtype'] == np.uint8:
-            output_scale, output_zero_point = self.az_output_details["quantization"]
-            az_output_data = (az_output_data - output_zero_point) * output_scale
+            output_scale, _ = self.az_output_details["quantization"]
+            az_output_data = az_output_data * output_scale
+
+        print(az_output_data)
 
         self.az_confidences = az_output_data
 
