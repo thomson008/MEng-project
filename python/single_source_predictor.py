@@ -76,7 +76,6 @@ class SingleSourcePredictor(Predictor):
     def get_azimuth_prediction(self, input_data):
         # Set input and run azimuth interpreter
         if len(self.az_input_details['shape']) == 4:
-            print(self.az_input_details['shape'])
             input_data = input_data[..., np.newaxis]
 
         if self.az_input_details['dtype'] == np.uint8:
@@ -95,8 +94,6 @@ class SingleSourcePredictor(Predictor):
         if self.az_output_details['dtype'] == np.uint8:
             output_scale, _ = self.az_output_details["quantization"]
             az_output_data = az_output_data * output_scale
-
-        print(az_output_data)
 
         self.az_confidences = az_output_data
 
