@@ -8,14 +8,16 @@ import tensorflow as tf
 from predictor import Predictor, get_mic_data, get_input_matrix, get_model_details
 from utils import *
 
+import tflite_runtime.interpreter as tflite
+
 
 def init_models():
     print('Loading models...')
     # Load the TFLite model and allocate tensors.
     base_dir = pathlib.Path(__file__).parent.parent.absolute()
-    az_model_file = os.path.join(base_dir, 'models', 'best_super_azimuth_model.tflite')
+    az_model_file = os.path.join(base_dir, 'models', 'quant_input_model.tflite')
     el_model_file = os.path.join(base_dir, 'models', 'elevation_model.tflite')
-    az_interpreter = tf.lite.Interpreter(model_path=az_model_file)
+    az_interpreter = tflite.Interpreter(model_path=az_model_file, experimental_delegates=[tflite.load_delegate('libedgetpu.so.1')])
     el_interpreter = tf.lite.Interpreter(model_path=el_model_file)
 
     print('Allocating tensors...')
@@ -76,7 +78,6 @@ class SingleSourcePredictor(Predictor):
     def get_azimuth_prediction(self, input_data):
         # Set input and run azimuth interpreter
         if len(self.az_input_details['shape']) == 4:
-            print(self.az_input_details['shape'])
             input_data = input_data[..., np.newaxis]
 
         if self.az_input_details['dtype'] == np.uint8:
@@ -95,8 +96,6 @@ class SingleSourcePredictor(Predictor):
         if self.az_output_details['dtype'] == np.uint8:
             output_scale, _ = self.az_output_details["quantization"]
             az_output_data = az_output_data * output_scale
-
-        print(az_output_data)
 
         self.az_confidences = az_output_data
 
