@@ -1,3 +1,4 @@
+import sys
 from tkinter import *
 
 from multi_source_app import MultiSourceApp
@@ -35,5 +36,8 @@ class MainApp:
 
 
 if __name__ == '__main__':
-    app = MainApp()
-    app.top.mainloop()
+    try:
+        app = MainApp()
+        app.top.mainloop()
+    except Exception:
+        sys.exit()

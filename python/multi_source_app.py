@@ -59,7 +59,7 @@ class MultiSourceApp(DoaApp):
     def run(self):
         C = self.create_canvas()
         az_label, az_val, az_conf_label, az_conf_val, el_label, el_val, el_conf_label, el_conf_val = self.create_labels()
-        predictor = MultiSourcePredictor()
+        predictor = MultiSourcePredictor(self.lines, self.fig)
 
         while True:
             predictor.is_active = self.prediction_running

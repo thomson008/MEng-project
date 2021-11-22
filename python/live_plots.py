@@ -7,14 +7,15 @@ p = pyaudio.PyAudio()
 stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 # Create figure for subplots of signals
-fig, axs = plt.subplots(7, figsize=(6, 12))
+fig, axs = plt.subplots(3, 2, figsize=(6, 6))
+
 fig.suptitle('Microphone array data')
-plt.subplots_adjust(hspace=0.8)
+plt.subplots_adjust(hspace=0.8, wspace=0.5)
 lines = []
 
-for i, ax in enumerate(axs):
+for i, ax in enumerate(axs.flat):
     ax.set_title(f'Microphone {i}')
-    ax.set_ylim(-250, 250)
+    ax.set_ylim(-300, 300)
     ax.set_xlim(0, CHUNK)
 
     x = np.arange(0, 2 * CHUNK, 2)
@@ -27,7 +28,7 @@ while True:
         data = np.frombuffer(stream.read(CHUNK), dtype=np.int16)
 
         # Update plots with data from the new frame
-        for c in range(CHANNELS - 1):
+        for c in range(CHANNELS - 2):
             mic_data = data[c::CHANNELS]
             lines[c].set_ydata(mic_data)
 

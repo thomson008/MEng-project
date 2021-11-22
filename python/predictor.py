@@ -1,4 +1,5 @@
 import platform
+from threading import Thread
 
 from alsa_suppress import noalsaerr
 from utils import *
@@ -28,7 +29,7 @@ def get_model_details(az_interpreter):
 
 
 class Predictor:
-    def __init__(self, thresh=50, max_silence_frames=10):
+    def __init__(self, lines, fig, thresh=50, max_silence_frames=10):
         # Model parameters
         self.is_active = False
 
@@ -42,3 +43,23 @@ class Predictor:
         else:
             with noalsaerr():
                 self.p = pyaudio.PyAudio()
+
+        self.lines = lines
+        self.fig = fig
+
+        self.exec_times = []
+        self.mic_data = np.zeros((CHUNK, CHANNELS - 2))
+
+        self.thread = Thread(target=self.update_signal_plot, daemon=True)
+        self.thread.start()
+
+    def update_signal_plot(self):
+        while True:
+            for c in range(CHANNELS - 2):
+                mic_channel = self.mic_data[:, c]
+                self.lines[c].set_ydata(mic_channel)
+            try:
+                self.fig.canvas.draw()
+                self.fig.canvas.flush_events()
+            except Exception:
+                return

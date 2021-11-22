@@ -29,8 +29,8 @@ def init_models():
 
 
 class MultiSourcePredictor(Predictor):
-    def __init__(self, thresh=50, max_silence_frames=10):
-        super().__init__(thresh, max_silence_frames)
+    def __init__(self, lines, fig, thresh=50, max_silence_frames=10):
+        super().__init__(lines, fig, thresh, max_silence_frames)
         self.az_current_predictions = []
 
         self.stream = self.p.open(
@@ -43,6 +43,9 @@ class MultiSourcePredictor(Predictor):
 
     def callback(self, in_data, frame_count, time_info, status):
         data, mic_data = get_mic_data(in_data)
+
+        if self.is_active:
+            self.mic_data = mic_data
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
             self.az_current_predictions = self.get_prediction_from_model(mic_data)
@@ -60,9 +63,9 @@ class MultiSourcePredictor(Predictor):
         input_data = get_input_matrix(mic_data)
 
         # Set input and run azimuth interpreter
-        self.az_interpreter.set_tensor(self.az_input_details[0]['index'], input_data)
+        self.az_interpreter.set_tensor(self.az_input_details['index'], input_data)
         self.az_interpreter.invoke()
-        az_output_data = self.az_interpreter.get_tensor(self.az_output_details[0]['index'])
+        az_output_data = self.az_interpreter.get_tensor(self.az_output_details['index'])
         return az_output_data[0]
 
     def output_predictions(self):

@@ -1,9 +1,11 @@
 import os
 import pathlib
 import time
+from threading import Thread
 
 import numpy as np
 import tensorflow as tf
+from matplotlib import pyplot as plt
 
 from predictor import Predictor, get_mic_data, get_input_matrix, get_model_details
 from utils import *
@@ -37,8 +39,8 @@ def init_models():
 
 
 class SingleSourcePredictor(Predictor):
-    def __init__(self, thresh=50, max_silence_frames=10):
-        super().__init__(thresh, max_silence_frames)
+    def __init__(self, lines, fig, thresh=50, max_silence_frames=10):
+        super().__init__(lines, fig, thresh, max_silence_frames)
         self.az_current_prediction = None
         self.el_current_prediction = None
         self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
@@ -56,6 +58,9 @@ class SingleSourcePredictor(Predictor):
 
     def callback(self, in_data, frame_count, time_info, status):
         data, mic_data = get_mic_data(in_data)
+
+        if self.is_active:
+            self.mic_data = mic_data
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
             input_data = get_input_matrix(mic_data)

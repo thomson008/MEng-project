@@ -1,7 +1,11 @@
 import math
 from tkinter import *
 
-from utils import UI_RESOLUTION
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+from utils import UI_RESOLUTION, CHUNK
 
 
 class DoaApp:
@@ -22,6 +26,9 @@ class DoaApp:
     RADIUS = DIM / 2 - DIST
 
     def __init__(self, top):
+        self.fig, self.axs = plt.subplots(3, 2, figsize=(6, 6))
+        self.lines = []
+
         self.prediction_running = False
         self.top = top
         self.data_frame, self.circle_frame = self.create_frames()
@@ -36,9 +43,13 @@ class DoaApp:
                                   height=2, width=15, font=("Arial", 12), cursor="hand2")
         self.exit_button.place(relx=0.5, y=560, anchor=CENTER)
 
+        self.window = Toplevel(self.top)
+        self.open_plot()
+
     def select_mode(self):
         self.data_frame.destroy()
         self.circle_frame.destroy()
+        self.window.destroy()
 
     def create_canvas(self):
         C = Canvas(self.circle_frame, bg="white", height=self.DIM, width=self.DIM)
@@ -98,3 +109,24 @@ class DoaApp:
         label = Label(self.data_frame, text="CNN DOA")
         label.config(font=("Arial", 40), fg="#4a4a4a")
         label.pack()
+
+    def open_plot(self):
+        self.window.title('Real-time signals plot')
+        self.window.geometry("500x500")
+
+        self.fig.suptitle('Microphone array data')
+        plt.subplots_adjust(hspace=0.8, wspace=0.5)
+
+        self.fig.suptitle('Microphone array data')
+        plt.subplots_adjust(hspace=0.8, wspace=0.5)
+        for i, ax in enumerate(self.axs.flat):
+            ax.set_title(f'Microphone {i + 1}: {i * 60}\N{DEGREE SIGN}')
+            ax.set_ylim(-300, 300)
+            ax.set_xlim(0, CHUNK)
+
+            x = np.arange(0, 2 * CHUNK, 2)
+            self.lines += ax.plot(x, np.random.rand(CHUNK))
+
+        canvas = FigureCanvasTkAgg(self.fig, master=self.window)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
