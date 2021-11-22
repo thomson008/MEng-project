@@ -1,5 +1,6 @@
 import math
 from tkinter import *
+import platform
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -42,14 +43,16 @@ class DoaApp:
         self.exit_button = Button(self.data_frame, text="Exit", command=self.top.destroy,
                                   height=2, width=15, font=("Arial", 12), cursor="hand2")
         self.exit_button.place(relx=0.5, y=560, anchor=CENTER)
-
-        self.window = Toplevel(self.top)
-        self.open_plot()
+        
+        if platform.system() == 'Windows':
+            self.window = Toplevel(self.top)
+            self.open_plot()
 
     def select_mode(self):
         self.data_frame.destroy()
         self.circle_frame.destroy()
-        self.window.destroy()
+        if platform.system() == 'Windows':
+            self.window.destroy()
 
     def create_canvas(self):
         C = Canvas(self.circle_frame, bg="white", height=self.DIM, width=self.DIM)

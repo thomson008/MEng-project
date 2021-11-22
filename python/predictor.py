@@ -50,8 +50,9 @@ class Predictor:
         self.exec_times = []
         self.mic_data = np.zeros((CHUNK, CHANNELS - 2))
 
-        self.thread = Thread(target=self.update_signal_plot, daemon=True)
-        self.thread.start()
+        if platform.system() == 'Windows':
+            self.thread = Thread(target=self.update_signal_plot, daemon=True)
+            self.thread.start()
 
     def update_signal_plot(self):
         while True:
