@@ -41,3 +41,5 @@ if __name__ == '__main__':
         app.top.mainloop()
     except Exception:
         sys.exit()
+
+    sys.exit()
