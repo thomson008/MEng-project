@@ -112,7 +112,11 @@ class DoaApp:
 
     def open_plot(self):
         self.window.title('Real-time signals plot')
-        self.window.geometry("500x500")
+
+        x = self.top.winfo_rootx()
+        y = self.top.winfo_rooty()
+        geom = f'+{x + self.WIDTH}+{y}'
+        self.window.geometry(f'500x500{geom}')
 
         self.fig.suptitle('Microphone array data')
         plt.subplots_adjust(hspace=0.8, wspace=0.5)
