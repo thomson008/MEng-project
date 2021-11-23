@@ -47,7 +47,7 @@ class Predictor:
         self.lines = lines
         self.fig = fig
 
-        self.exec_times = []
+        self.cnn_exec_times = []
         self.mic_data = np.zeros((CHUNK, CHANNELS - 2))
 
         if platform.system() == 'Windows':

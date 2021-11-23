@@ -17,13 +17,9 @@ class MultiSourceApp(DoaApp):
             if conf > 0.5:
                 fill = '#78ebb3'
                 outline = '#2ca86b'
-            else:
-                fill = '#ffadad'
-                outline = '#db6b6b'
-
-            arc = C.create_arc(coord, start=i * UI_RESOLUTION - 5, extent=UI_RESOLUTION, fill=fill, outline=outline,
-                               width=2)
-            arcs.append(arc)
+                arc = C.create_arc(coord, start=i * UI_RESOLUTION - 5, extent=UI_RESOLUTION, fill=fill, outline=outline,
+                                   width=2)
+                arcs.append(arc)
 
         self.top.update()
 

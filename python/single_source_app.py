@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+from idlelib.tooltip import Hovertip
 from tkinter import *
 
 import numpy as np
@@ -62,10 +62,22 @@ class SingleSourceApp(DoaApp):
         return azimuth_label, azimuth_val, az_conf_label, az_conf_val, \
             elevation_label, elevation_val, el_conf_label, el_conf_val
 
+    def create_radio_buttons(self):
+        CNN = BooleanVar(self.data_frame, True)
+        cnn_button = Radiobutton(self.data_frame, text='CNN', variable=CNN, value=True)
+        cnn_button.place(relx=0.4, y=210, anchor=CENTER)
+        music_button = Radiobutton(self.data_frame, text='MUSIC', variable=CNN, value=False)
+        music_button.place(relx=0.6, y=210, anchor=CENTER)
+        Hovertip(cnn_button, 'Estimate azimuth angle with a \nneural network.')
+        Hovertip(music_button, 'Estimate azimuth angle with \nMUSIC algorithm.')
+        return CNN
+
     def run(self):
         C = self.create_canvas()
         az_label, az_val, az_conf_label, az_conf_val, el_label, el_val, el_conf_label, el_conf_val = self.create_labels()
-        predictor = SingleSourcePredictor(self.lines, self.fig)
+        CNN = self.create_radio_buttons()
+
+        predictor = SingleSourcePredictor(CNN, self.lines, self.fig)
 
         while True:
             predictor.is_active = self.prediction_running
@@ -85,8 +97,13 @@ class SingleSourceApp(DoaApp):
                 self.color_arcs(C, display_confs, max_idx)
             except TclError:
                 predictor.is_active = False
-                inference_time = round(np.mean(predictor.exec_times) * 1000, 1) if predictor.exec_times else 'N/A'
-                print(f'Application closed. Average inference time (ms): {inference_time}')
+                cnn_inference_time = round(np.mean(predictor.cnn_exec_times) * 1000, 1) \
+                    if predictor.cnn_exec_times else 'N/A'
+                music_inference_time = round(np.mean(predictor.music_exec_times) * 1000, 1) \
+                    if predictor.music_exec_times else 'N/A'
+                print(f'Application closed.')
+                print(f'Average CNN inference time (ms): {cnn_inference_time}')
+                print(f'Average MUSIC inference time (ms): {music_inference_time}')
                 return
 
             az_prediction = predictor.az_current_prediction
@@ -94,12 +111,12 @@ class SingleSourceApp(DoaApp):
 
             if not (az_prediction is None or el_prediction is None):
                 (pred, conf), (el_pred, el_conf) = az_prediction, el_prediction
-                conf = round(conf * 100, 1)
-                el_conf = round(el_conf * 100, 1)
+                conf = f'{round(conf * 100, 1)}%' if CNN.get() else 'N/A'
+                el_conf = f'{round(el_conf * 100, 1)}%'
                 az_val.config(text=f'{pred}\N{DEGREE SIGN}')
-                az_conf_val.config(text=f'{conf}%')
+                az_conf_val.config(text=conf)
                 el_val.config(text=f'{el_pred}\N{DEGREE SIGN}')
-                el_conf_val.config(text=f'{el_conf}%')
+                el_conf_val.config(text=el_conf)
             else:
                 az_val.config(text='-')
                 az_conf_val.config(text='-')

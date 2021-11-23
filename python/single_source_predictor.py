@@ -1,14 +1,12 @@
 import os
 import pathlib
 import time
-from threading import Thread
 
-import numpy as np
 import tensorflow as tf
-from matplotlib import pyplot as plt
 
 from predictor import Predictor, get_mic_data, get_input_matrix, get_model_details
 from utils import *
+import pyroomacoustics as pra
 
 
 def init_models():
@@ -39,18 +37,20 @@ def init_models():
 
 
 class SingleSourcePredictor(Predictor):
-    def __init__(self, lines, fig, thresh=50, max_silence_frames=10):
+    def __init__(self, CNN, lines, fig, thresh=50, max_silence_frames=10):
         super().__init__(lines, fig, thresh, max_silence_frames)
         self.az_current_prediction = None
         self.el_current_prediction = None
         self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
+        self.CNN = CNN
 
         self.stream = self.p.open(
             format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
             frames_per_buffer=CHUNK, stream_callback=self.callback
         )
 
-        self.exec_times = []
+        self.cnn_exec_times = []
+        self.music_exec_times = []
 
         self.stream.start_stream()
         self.az_interpreter, self.az_input_details, self.az_output_details, \
@@ -64,7 +64,10 @@ class SingleSourcePredictor(Predictor):
 
         if abs(np.max(mic_data)) > self.thresh and self.is_active:
             input_data = get_input_matrix(mic_data)
-            self.az_current_prediction = self.get_azimuth_prediction(input_data)
+            if self.CNN.get():
+                self.az_current_prediction = self.get_azimuth_prediction(input_data)
+            else:
+                self.az_current_prediction = self.run_music(mic_data)
             self.el_current_prediction = self.get_elevation_prediction(input_data)
         else:
             if self.silent_frames == self.max_silence_frames:
@@ -77,6 +80,13 @@ class SingleSourcePredictor(Predictor):
             self.output_predictions()
 
         return data, pyaudio.paContinue
+
+    def run_music(self, mic_data):
+        start_time = time.time()
+        stft_data = compute_stft_matrix(mic_data)
+        az_current_prediction = self.get_music_prediction(stft_data)
+        self.music_exec_times.append(time.time() - start_time)
+        return az_current_prediction
 
     def get_azimuth_prediction(self, input_data):
         # Set input and run azimuth interpreter
@@ -94,7 +104,7 @@ class SingleSourcePredictor(Predictor):
 
         az_output_data = self.az_interpreter.get_tensor(self.az_output_details['index'])[0]
         execution_time = time.time() - start_time
-        self.exec_times.append(execution_time)
+        self.cnn_exec_times.append(execution_time)
 
         if self.az_output_details['dtype'] == np.uint8:
             output_scale, _ = self.az_output_details["quantization"]
@@ -105,6 +115,25 @@ class SingleSourcePredictor(Predictor):
         # Get the predicted azimuth as argument of the max probability
         az_prediction, az_confidence = np.argmax(self.az_confidences) * AZIMUTH_RESOLUTION, np.max(self.az_confidences)
         return az_prediction, az_confidence
+
+    def get_music_prediction(self, input_data):
+        mic_center = [2, 2]
+        mic_height = 1
+
+        # Radius constant, will always be the same for MiniDSP array
+        mic_radius = 0.045
+        R = pra.circular_2D_array(center=mic_center, M=6, phi0=0, radius=mic_radius)
+        R = np.vstack((R, [mic_height] * 6))
+
+        # Run MUSIC algorithm for DOA
+        doa = pra.doa.MUSIC(R, RATE, 256, n_grid=(360 // AZIMUTH_RESOLUTION))
+        doa.locate_sources(input_data)
+
+        prediction = round((doa.azimuth_recon[0] * 180 / math.pi))
+        self.az_confidences = np.zeros(360 // AZIMUTH_RESOLUTION)
+        self.az_confidences[prediction] = 1
+
+        return round((doa.azimuth_recon[0] * 180 / math.pi)), 1
 
     def get_elevation_prediction(self, input_data):
         # Set input and run elevation interpreter
